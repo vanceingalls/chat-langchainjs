@@ -19,5 +19,6 @@
   "devDependencies": {
     "@types/node": "^20.12.7",
     "turbo": "latest"
-  }
+  },
+  "packageManager": "yarn@3.6.4"
 }
