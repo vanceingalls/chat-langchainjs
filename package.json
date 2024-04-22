@@ -17,6 +17,7 @@
     "format:check": "yarn run turbo:command format:check"
   },
   "devDependencies": {
+    "@types/node": "^20.12.7",
     "turbo": "latest"
   }
 }
