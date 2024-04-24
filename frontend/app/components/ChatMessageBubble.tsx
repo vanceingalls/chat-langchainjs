@@ -64,10 +64,10 @@ const createAnswerElements = (
   highlighedSourceLinkStates: boolean[],
   setHighlightedSourceLinkStates: React.Dispatch<
     React.SetStateAction<boolean[]>
-  >,
+  >
 ) => {
   const matches = Array.from(
-    content.matchAll(/\[\^?\$?{?(\d+)}?\^?\]|\[\$\{(\d+)\}\]/g),
+    content.matchAll(/\[\^?\$?{?(\d+)}?\^?\]|\[\$\{(\d+)\}\]/g)
   );
   const elements: JSX.Element[] = [];
   let prevIndex = 0;
@@ -82,7 +82,7 @@ const createAnswerElements = (
           dangerouslySetInnerHTML={{
             __html: DOMPurify.sanitize(content.slice(prevIndex, match.index)),
           }}
-        ></span>,
+        ></span>
       );
       elements.push(
         <InlineCitation
@@ -92,13 +92,13 @@ const createAnswerElements = (
           highlighted={highlighedSourceLinkStates[resolvedNum]}
           onMouseEnter={() =>
             setHighlightedSourceLinkStates(
-              filteredSources.map((_, i) => i === resolvedNum),
+              filteredSources.map((_, i) => i === resolvedNum)
             )
           }
           onMouseLeave={() =>
             setHighlightedSourceLinkStates(filteredSources.map(() => false))
           }
-        />,
+        />
       );
       prevIndex = (match?.index ?? 0) + match[0].length;
     }
@@ -109,7 +109,7 @@ const createAnswerElements = (
       dangerouslySetInnerHTML={{
         __html: DOMPurify.sanitize(content.slice(prevIndex)),
       }}
-    ></span>,
+    ></span>
   );
   return elements;
 };
@@ -213,7 +213,7 @@ export function ChatMessageBubble(props: {
   // Use an array of highlighted states as a state since React
   // complains when creating states in a loop
   const [highlighedSourceLinkStates, setHighlightedSourceLinkStates] = useState(
-    filteredSources.map(() => false),
+    filteredSources.map(() => false)
   );
   const answerElements =
     role === "assistant"
@@ -222,7 +222,7 @@ export function ChatMessageBubble(props: {
           filteredSources,
           sourceIndexMap,
           highlighedSourceLinkStates,
-          setHighlightedSourceLinkStates,
+          setHighlightedSourceLinkStates
         )
       : [];
 
@@ -280,12 +280,12 @@ export function ChatMessageBubble(props: {
                       highlighted={highlighedSourceLinkStates[index]}
                       onMouseEnter={() =>
                         setHighlightedSourceLinkStates(
-                          filteredSources.map((_, i) => i === index),
+                          filteredSources.map((_, i) => i === index)
                         )
                       }
                       onMouseLeave={() =>
                         setHighlightedSourceLinkStates(
-                          filteredSources.map(() => false),
+                          filteredSources.map(() => false)
                         )
                       }
                       runId={runId}

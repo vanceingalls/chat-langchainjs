@@ -27,7 +27,12 @@ import { Select, Link } from "@chakra-ui/react";
 import { Source } from "./SourceBubble";
 import { apiBaseUrl } from "../utils/constants";
 
-const MODEL_TYPES = ["openai_gpt_3_5_turbo", "fireworks_mixtral"];
+const MODEL_TYPES = [
+  "openai_gpt_3_5_turbo",
+  "fireworks_mixtral",
+  "groq_llama3",
+  "openai_gpt_4_turbo",
+];
 
 const defaultLlmValue =
   MODEL_TYPES[Math.floor(Math.random() * MODEL_TYPES.length)];
@@ -42,7 +47,7 @@ export function ChatWindow(props: { conversationId: string }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [llm, setLlm] = useState(
-    searchParams.get("llm") ?? "openai_gpt_3_5_turbo",
+    searchParams.get("llm") ?? "openai_gpt_3_5_turbo"
   );
   const [llmIsLoading, setLlmIsLoading] = useState(true);
   useEffect(() => {
@@ -89,10 +94,9 @@ export function ChatWindow(props: { conversationId: string }) {
       const validLanguage = hljs.getLanguage(language || "")
         ? language
         : "plaintext";
-      const highlightedCode = hljs.highlight(
-        validLanguage || "plaintext",
-        code,
-      ).value;
+      const highlightedCode = hljs.highlight(code, {
+        language: validLanguage || "plaintext",
+      }).value;
       return `<pre class="highlight bg-gray-700" style="padding: 5px; border-radius: 5px; overflow: auto; overflow-wrap: anywhere; white-space: pre-wrap; max-width: 100%; display: block; line-height: 1.2"><code class="${language}" style="color: #d6e2ef; font-size: 12px; ">${highlightedCode}</code></pre>`;
     };
     marked.setOptions({ renderer });
@@ -124,13 +128,13 @@ export function ChatWindow(props: { conversationId: string }) {
         },
         {
           includeNames: [sourceStepName],
-        },
+        }
       );
       for await (const chunk of streamLog) {
         streamedResponse = applyPatch(streamedResponse, chunk.ops).newDocument;
         if (
           Array.isArray(
-            streamedResponse?.logs?.[sourceStepName]?.final_output?.output,
+            streamedResponse?.logs?.[sourceStepName]?.final_output?.output
           )
         ) {
           sources = streamedResponse.logs[
@@ -144,7 +148,11 @@ export function ChatWindow(props: { conversationId: string }) {
           runId = streamedResponse.id;
         }
         if (Array.isArray(streamedResponse?.streamed_output)) {
-          accumulatedMessage = streamedResponse.streamed_output.join("");
+          accumulatedMessage = streamedResponse.streamed_output
+            // TODO i give up, something is duplicating the streamed json patches
+            // so just filter out every other output entry for now
+            .filter((_, i) => i % 2)
+            .join("");
         }
         const parsedResult = marked.parse(accumulatedMessage);
 
@@ -250,9 +258,11 @@ export function ChatWindow(props: { conversationId: string }) {
                 width={"240px"}
               >
                 <option value="openai_gpt_3_5_turbo">GPT-3.5-Turbo</option>
+                <option value="openai_gpt_4_turbo">GPT-4-Turbo</option>
                 <option value="fireworks_mixtral">
                   Mixtral (via Fireworks.ai)
                 </option>
+                <option value="groq_llama3">Llama 3 (via Groq)</option>
               </Select>
             )}
           </div>

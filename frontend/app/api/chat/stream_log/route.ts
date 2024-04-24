@@ -13,6 +13,7 @@ import { HumanMessage, AIMessage, BaseMessage } from "@langchain/core/messages";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatFireworks } from "@langchain/community/chat_models/fireworks";
+import { ChatGroq } from "@langchain/groq";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import {
   PromptTemplate,
@@ -69,7 +70,7 @@ const getRetriever = async () => {
     !process.env.WEAVIATE_URL
   ) {
     throw new Error(
-      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_URL environment variables must be set",
+      "WEAVIATE_INDEX_NAME, WEAVIATE_API_KEY and WEAVIATE_URL environment variables must be set"
     );
   }
 
@@ -85,7 +86,7 @@ const getRetriever = async () => {
       indexName: process.env.WEAVIATE_INDEX_NAME,
       textKey: "text",
       metadataKeys: ["source", "title"],
-    },
+    }
   );
   return vectorstore.asRetriever({ k: 6 });
 };
@@ -103,13 +104,13 @@ const createRetrieverChain = (llm: BaseChatModel, retriever: Runnable) => {
     runName: "CondenseQuestion",
   });
   const hasHistoryCheckFn = RunnableLambda.from(
-    (input: RetrievalChainInput) => input.chat_history.length > 0,
+    (input: RetrievalChainInput) => input.chat_history.length > 0
   ).withConfig({ runName: "HasChatHistoryCheck" });
   const conversationChain = condenseQuestionChain.pipe(retriever).withConfig({
     runName: "RetrievalChainWithHistory",
   });
   const basicRetrievalChain = RunnableLambda.from(
-    (input: RetrievalChainInput) => input.question,
+    (input: RetrievalChainInput) => input.question
   )
     .withConfig({
       runName: "Itemgetter:question",
@@ -165,12 +166,12 @@ const createChain = (llm: BaseChatModel, retriever: Runnable) => {
       }),
     ]),
     question: RunnableLambda.from(
-      (input: RetrievalChainInput) => input.question,
+      (input: RetrievalChainInput) => input.question
     ).withConfig({
       runName: "Itemgetter:question",
     }),
     chat_history: RunnableLambda.from(
-      (input: RetrievalChainInput) => input.chat_history,
+      (input: RetrievalChainInput) => input.chat_history
     ).withConfig({
       runName: "Itemgetter:chat_history",
     }),
@@ -191,7 +192,7 @@ const createChain = (llm: BaseChatModel, retriever: Runnable) => {
   return RunnableSequence.from([
     {
       question: RunnableLambda.from(
-        (input: RetrievalChainInput) => input.question,
+        (input: RetrievalChainInput) => input.question
       ).withConfig({
         runName: "Itemgetter:question",
       }),
@@ -216,15 +217,25 @@ export async function POST(req: NextRequest) {
         modelName: "gpt-3.5-turbo-1106",
         temperature: 0,
       });
+    } else if (config.configurable.llm === "openai_gpt_4_turbo") {
+      llm = new ChatOpenAI({
+        modelName: "gpt-4-turbo",
+        temperature: 0,
+      });
     } else if (config.configurable.llm === "fireworks_mixtral") {
       llm = new ChatFireworks({
         modelName: "accounts/fireworks/models/mixtral-8x7b-instruct",
         temperature: 0,
       });
+    } else if (config.configurable.llm === "groq_llama3") {
+      llm = new ChatGroq({
+        modelName: "llama3-70b-8192",
+        temperature: 0,
+      });
     } else {
       throw new Error(
         "Invalid LLM option passed. Must be 'openai' or 'mixtral'. Received: " +
-          config.llm,
+          config.llm
       );
     }
 
@@ -250,8 +261,8 @@ export async function POST(req: NextRequest) {
         for await (const chunk of stream) {
           controller.enqueue(
             textEncoder.encode(
-              "event: data\ndata: " + JSON.stringify(chunk) + "\n\n",
-            ),
+              "event: data\ndata: " + JSON.stringify(chunk) + "\n\n"
+            )
           );
         }
         controller.enqueue(textEncoder.encode("event: end\n\n"));
