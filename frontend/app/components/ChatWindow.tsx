@@ -47,7 +47,7 @@ export function ChatWindow(props: { conversationId: string }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [llm, setLlm] = useState(
-    searchParams.get("llm") ?? "openai_gpt_3_5_turbo"
+    searchParams.get("llm") ?? "openai_gpt_3_5_turbo",
   );
   const [llmIsLoading, setLlmIsLoading] = useState(true);
   useEffect(() => {
@@ -128,13 +128,13 @@ export function ChatWindow(props: { conversationId: string }) {
         },
         {
           includeNames: [sourceStepName],
-        }
+        },
       );
       for await (const chunk of streamLog) {
         streamedResponse = applyPatch(streamedResponse, chunk.ops).newDocument;
         if (
           Array.isArray(
-            streamedResponse?.logs?.[sourceStepName]?.final_output?.output
+            streamedResponse?.logs?.[sourceStepName]?.final_output?.output,
           )
         ) {
           sources = streamedResponse.logs[
