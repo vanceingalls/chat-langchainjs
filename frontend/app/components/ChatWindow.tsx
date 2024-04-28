@@ -111,7 +111,7 @@ export function ChatWindow(props: { conversationId: string }) {
         },
       });
       const llmDisplayName = llm ?? "openai_gpt_3_5_turbo";
-      const streamLog = remoteChain.streamLog(
+      const streamEvent = remoteChain.streamEvents(
         {
           question: messageValue,
           chat_history: chatHistory,
@@ -125,37 +125,25 @@ export function ChatWindow(props: { conversationId: string }) {
             conversation_id: conversationId,
             llm: llmDisplayName,
           },
+          version: "v1",
         },
         {
           includeNames: [sourceStepName],
         },
       );
-      for await (const chunk of streamLog) {
-        streamedResponse = applyPatch(streamedResponse, chunk.ops).newDocument;
-        if (
-          Array.isArray(
-            streamedResponse?.logs?.[sourceStepName]?.final_output?.output,
-          )
-        ) {
-          sources = streamedResponse.logs[
-            sourceStepName
-          ].final_output.output.map((doc: Record<string, any>) => ({
+      let response = "";
+      for await (const chunk of streamEvent) {
+        if (chunk.event === "on_parser_stream") {
+          response += chunk.data.chunk;
+        } else if (chunk.name === "FormatDocumentChunks" && chunk.data.chunk) {
+          sources = chunk.data.chunk.map((doc: Record<string, any>) => ({
             url: doc.metadata.source,
             title: doc.metadata.title,
           }));
         }
-        if (streamedResponse.id !== undefined) {
-          runId = streamedResponse.id;
+        if (chunk.run_id) {
+          runId = chunk.run_id;
         }
-        if (Array.isArray(streamedResponse?.streamed_output)) {
-          accumulatedMessage = streamedResponse.streamed_output
-            // TODO i give up, something is duplicating the streamed json patches
-            // so just filter out every other output entry for now
-            .filter((_, i) => i % 2)
-            .join("");
-        }
-        const parsedResult = marked.parse(accumulatedMessage);
-
         setMessages((prevMessages) => {
           let newMessages = [...prevMessages];
           if (
@@ -165,13 +153,13 @@ export function ChatWindow(props: { conversationId: string }) {
             messageIndex = newMessages.length;
             newMessages.push({
               id: Math.random().toString(),
-              content: parsedResult.trim(),
+              content: response,
               runId,
               sources,
               role: "assistant",
             });
           } else if (newMessages[messageIndex] !== undefined) {
-            newMessages[messageIndex].content = parsedResult.trim();
+            newMessages[messageIndex].content = response;
             newMessages[messageIndex].runId = runId;
             newMessages[messageIndex].sources = sources;
           }

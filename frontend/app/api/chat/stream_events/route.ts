@@ -127,9 +127,7 @@ const createRetrieverChain = (llm: BaseChatModel, retriever: Runnable) => {
 };
 
 const formatDocs = (docs: Document[]) => {
-  return docs
-    .map((doc, i) => `<doc id='${i}'>${doc.pageContent}</doc>`)
-    .join("\n");
+  return docs;
 };
 
 const formatChatHistoryAsString = (history: BaseMessage[]) => {
@@ -250,9 +248,16 @@ export async function POST(req: NextRequest) {
      * you can pass directly to the Response as well:
      * https://js.langchain.com/docs/expression_language/interface#stream
      */
-    const stream = answerChain.streamLog(input, config, {
-      includeNames: body.includeNames,
-    });
+    // const stream = answerChain.streamLog(input, config, {
+    //   includeNames: body.includeNames,
+    // });
+    const stream = answerChain.streamEvents(
+      input,
+      { ...config, version: "v1" },
+      {
+        includeNames: body.includeNames,
+      },
+    );
 
     // Only return a selection of output to the frontend
     const textEncoder = new TextEncoder();
